@@ -122,7 +122,7 @@ impl <'a> Scratch<'a> for NoScratch {
 }
 
 pub struct UseScratch {
-    _owned_space: ::std::vec::Vec<::std::vec::Vec<capnp::Word>>,
+    _owned_space: ::std::vec::Vec<::std::vec::Vec<u8>>,
     scratch_space: ::std::vec::Vec<message::ScratchSpace<'static>>,
 }
 
@@ -131,7 +131,7 @@ impl UseScratch {
         let mut owned = Vec::new();
         let mut scratch = Vec::new();
         for _ in 0..6 {
-            let mut words = ::capnp::Word::allocate_zeroed_vec(SCRATCH_SIZE);
+            let mut words = vec![0u8; SCRATCH_SIZE * 8];
             scratch.push(message::ScratchSpace::new(
                 unsafe { mem::transmute(&mut words[..]) }));
             owned.push(words);
