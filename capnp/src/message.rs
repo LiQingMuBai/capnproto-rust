@@ -190,7 +190,7 @@ impl <S> Reader<S> where S: ReaderSegments {
     /// Gets the [canonical](https://capnproto.org/encoding.html#canonicalization) form
     /// of this message. Works by copying the message twice. For a canonicalization
     /// method that only requires one copy, see `message::Builder::set_root_canonical()`.
-    pub fn canonicalize(&self) -> Result<Vec<u8>> {
+    pub fn canonicalize(&self) -> Result<Vec<crate::Word>> {
         let root = self.get_root_internal()?;
         let size = root.target_size()?.word_count + 1;
         let mut message = Builder::new(HeapAllocator::new().first_segment_words(size as u32));
@@ -199,7 +199,9 @@ impl <S> Reader<S> where S: ReaderSegments {
         assert_eq!(1, output_segments.len());
         let output = output_segments[0];
         assert!((output.len() / BYTES_PER_WORD) as u64 <= size);
-        Ok(output.into())
+        let mut result = crate::Word::allocate_zeroed_vec(output.len() / BYTES_PER_WORD);
+        crate::Word::words_to_bytes_mut(&mut result[..]).copy_from_slice(output);
+        Ok(result)
     }
 
     pub fn into_typed<T: for<'a> Owned<'a>>(self) -> TypedReader<S, T> {

@@ -35,7 +35,7 @@ fn canonicalize_succeeds_on_null_message() {
     assert!(message.is_canonical().unwrap());
 
     let canonical_bytes = message.canonicalize().unwrap();
-    assert_eq!(&canonical_bytes[..], capnp::Word::words_to_bytes(segment));
+    assert_eq!(&canonical_bytes[..], segment);
 }
 
 #[test]
@@ -61,10 +61,10 @@ fn dont_truncate_struct_too_far() {
 
     let canonicalized = message.canonicalize().unwrap();
 
-    let canonical_segment: &[u8] = &[
-        0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
-        0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80,
+    let canonical_segment: &[capnp::Word] = &[
+        capnp::word(0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00),
+        capnp::word(0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11),
+        capnp::word(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80),
     ];
 
     assert_eq!(&canonicalized[..], canonical_segment);
@@ -100,12 +100,12 @@ fn dont_truncate_struct_list_too_far() {
 
     let canonicalized = message.canonicalize().unwrap();
 
-    let canonical_segment: &[u8] = &[
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
-        0x01, 0x00, 0x00, 0x00, 0x17, 0x00, 0x00, 0x00,
-        0x04, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
-        0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80,
+    let canonical_segment: &[capnp::Word] = &[
+        capnp::word(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00),
+        capnp::word(0x01, 0x00, 0x00, 0x00, 0x17, 0x00, 0x00, 0x00),
+        capnp::word(0x04, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00),
+        capnp::word(0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22),
+        capnp::word(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80),
     ];
 
     assert_eq!(&canonicalized[..], canonical_segment);
@@ -222,9 +222,9 @@ fn simple_multisegment_message() {
     assert!(!message.is_canonical().unwrap());
 
     let canonicalized = message.canonicalize().unwrap();
-    let canonical_segment: &[u8] = &[
-        0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
-        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+    let canonical_segment: &[capnp::Word] = &[
+        capnp::word(0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00),
+        capnp::word(0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07),
     ];
 
     assert_eq!(&canonicalized[..], canonical_segment);
@@ -249,9 +249,9 @@ fn multisegment_only_first_segment_used() {
     assert!(!message.is_canonical().unwrap());
 
     let canonicalized = message.canonicalize().unwrap();
-    let canonical_segment: &[u8] = &[
-        0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
-        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+    let canonical_segment: &[capnp::Word] = &[
+        capnp::word(0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00),
+        capnp::word(0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07),
     ];
 
     assert_eq!(&canonicalized[..], canonical_segment);
@@ -311,7 +311,7 @@ fn empty_inline_composite_list_of_0_sized_structs() {
     assert!(message.is_canonical().unwrap());
 
     let canonical_words = message.canonicalize().unwrap();
-    assert_eq!(capnp::Word::words_to_bytes(segment), &canonical_words[..]);
+    assert_eq!(segment, &canonical_words[..]);
 }
 
 #[test]
@@ -333,7 +333,7 @@ fn inline_composite_list_with_void_list() {
     assert!(message.is_canonical().unwrap());
 
     let canonical_words = message.canonicalize().unwrap();
-    assert_eq!(capnp::Word::words_to_bytes(segment), &canonical_words[..]);
+    assert_eq!(segment, &canonical_words[..]);
 }
 
 #[test]
@@ -384,7 +384,7 @@ fn truncate_data_section_inline_composite() {
 
     let canonical_words = message.canonicalize().unwrap();
 
-    let canonical_segments = &[&canonical_words[..]];
+    let canonical_segments = &[capnp::Word::words_to_bytes(&canonical_words[..])];
     let canonical_segment_array = message::SegmentArray::new(canonical_segments);
     let canonical_message = message::Reader::new(canonical_segment_array, Default::default());
     assert!(canonical_message.is_canonical().unwrap());
@@ -408,16 +408,16 @@ fn truncate_pointer_section_inline_composite() {
 
     let canonical_words = message.canonicalize().unwrap();
 
-    let canonical_segments = &[&canonical_words[..]];
+    let canonical_segments = &[capnp::Word::words_to_bytes(&canonical_words[..])];
     let canonical_segment_array = message::SegmentArray::new(canonical_segments);
     let canonical_message = message::Reader::new(canonical_segment_array, Default::default());
     assert!(canonical_message.is_canonical().unwrap());
 
-    let expected_canonical_words: &[u8] = &[
-        0x01, 0x00, 0x00, 0x00, 0x17, 0x00, 0x00, 0x00,
-        0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+    let expected_canonical_words: &[capnp::Word] = &[
+        capnp::word(0x01, 0x00, 0x00, 0x00, 0x17, 0x00, 0x00, 0x00),
+        capnp::word(0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00),
+        capnp::word(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00),
+        capnp::word(0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa),
     ];
 
     assert_eq!(expected_canonical_words, &canonical_words[..]);
@@ -440,15 +440,15 @@ fn list_padding_must_be_zero() {
 
     let canonical_words = message.canonicalize().unwrap();
 
-    let canonical_segments = &[&canonical_words[..]];
+    let canonical_segments = &[capnp::Word::words_to_bytes(&canonical_words[..])];
     let canonical_segment_array = message::SegmentArray::new(canonical_segments);
     let canonical_message = message::Reader::new(canonical_segment_array, Default::default());
     assert!(canonical_message.is_canonical().unwrap());
 
 
-    let expected_canonical_words: &[u8] = &[
-        0x01, 0x00, 0x00, 0x00, 0x1a, 0x00, 0x00, 0x00,
-        0x01, 0x02, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
+    let expected_canonical_words: &[capnp::Word] = &[
+        capnp::word(0x01, 0x00, 0x00, 0x00, 0x1a, 0x00, 0x00, 0x00),
+        capnp::word(0x01, 0x02, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00),
     ];
 
     assert_eq!(expected_canonical_words, &canonical_words[..]);
@@ -471,15 +471,15 @@ fn bit_list_padding_must_be_zero() {
 
     let canonical_words = message.canonicalize().unwrap();
 
-    let canonical_segments = &[&canonical_words[..]];
+    let canonical_segments = &[capnp::Word::words_to_bytes(&canonical_words[..])];
     let canonical_segment_array = message::SegmentArray::new(canonical_segments);
     let canonical_message = message::Reader::new(canonical_segment_array, Default::default());
     assert!(canonical_message.is_canonical().unwrap());
 
 
-    let expected_canonical_words: &[u8] = &[
-        0x01, 0x00, 0x00, 0x00, 0x59, 0x00, 0x00, 0x00,
-        0xee, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    let expected_canonical_words: &[capnp::Word] = &[
+        capnp::word(0x01, 0x00, 0x00, 0x00, 0x59, 0x00, 0x00, 0x00),
+        capnp::word(0xee, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00),
     ];
 
     assert_eq!(expected_canonical_words, &canonical_words[..]);
