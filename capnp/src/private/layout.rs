@@ -133,6 +133,7 @@ pub struct WirePointer {
 }
 
 #[test]
+#[cfg(feature = "unaligned")]
 fn wire_pointer_align() {
     // We cast *u8 to *WirePointer, so we need to make sure it's alignment allows that.
     assert_eq!(std::mem::align_of::<WirePointer>(), 1);

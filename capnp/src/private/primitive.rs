@@ -8,6 +8,7 @@ pub trait Primitive {
     fn set(raw: &mut Self::Raw, value: Self);
 }
 
+#[cfg(feature = "unaligned")]
 macro_rules! primitive_impl(
     ($typ:ty, $n:expr) => (
         impl Primitive for $typ {
@@ -26,6 +27,26 @@ macro_rules! primitive_impl(
         );
     );
 
+#[cfg(not(feature = "unaligned"))]
+macro_rules! primitive_impl(
+    ($typ:ty, $n:expr) => (
+        impl Primitive for $typ {
+            type Raw = $typ;
+
+            #[inline]
+            fn get(raw: &Self::Raw) -> Self {
+                raw.to_le()
+            }
+
+            #[inline]
+            fn set(raw: &mut Self::Raw, value: Self) {
+                *raw = value.to_le()
+            }
+        }
+        );
+    );
+
+
 primitive_impl!(u8, 1);
 primitive_impl!(i8, 1);
 primitive_impl!(u16, 2);
@@ -34,9 +55,38 @@ primitive_impl!(u32, 4);
 primitive_impl!(i32, 4);
 primitive_impl!(u64, 8);
 primitive_impl!(i64, 8);
+
+#[cfg(feature = "unaligned")]
 primitive_impl!(f32, 4);
+
+#[cfg(feature = "unaligned")]
 primitive_impl!(f64, 8);
 
+#[cfg(not(feature = "unaligned"))]
+impl Primitive for f32 {
+    type Raw = f32;
+
+    fn get(raw: &Self::Raw) -> Self {
+        f32::from_bits(raw.to_bits().to_le())
+    }
+
+    fn set(raw: &mut Self::Raw, value: Self) {
+        *raw = f32::from_bits(value.to_bits().to_le())
+    }
+}
+
+#[cfg(not(feature = "unaligned"))]
+impl Primitive for f64 {
+    type Raw = f64;
+
+    fn get(raw: &Self::Raw) -> Self {
+        f64::from_bits(raw.to_bits().to_le())
+    }
+
+    fn set(raw: &mut Self::Raw, value: Self) {
+        *raw = f64::from_bits(value.to_bits().to_le())
+    }
+}
 
 /// A value casted directly from a little-endian byte buffer. On big-endian
 /// processors, the bytes of the value need to be swapped upon reading and writing.
