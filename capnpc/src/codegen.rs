@@ -439,7 +439,7 @@ pub fn getter_text(gen: &GeneratorContext,
                             &default_name,
                             ::capnp::raw::get_struct_pointer_section(default_value).get(0),
                             crate::pointer_constants::WordArrayDeclarationOptions {public: true, omit_first_word: false})?);
-                        format!("Some(&_private::{}[..])", default_name)
+                        format!("Some(&_private::{}.data[..])", default_name)
                     } else {
                         "::std::option::Option::None".to_string()
                     };

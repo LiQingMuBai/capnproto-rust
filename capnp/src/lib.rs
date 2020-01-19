@@ -53,6 +53,11 @@ pub(crate) struct Word {
     raw_content: [u8; 8]
 }
 
+#[repr(C, align(8))]
+pub struct AlignedData<T> {
+    pub data: T,
+}
+
 /// Size of a message. Every generated struct has a method `.total_size()` that returns this.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct MessageSize {

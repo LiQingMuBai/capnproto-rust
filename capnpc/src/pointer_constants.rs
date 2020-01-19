@@ -50,9 +50,9 @@ pub fn word_array_declaration(name: &str,
 
     let vis = if options.public { "pub " } else { "" };
     Ok(Branch(vec![
-        Line(format!("{}static {}: [u8; {}] = [", vis, name, words.len())),
+        Line(format!("{}static {}: capnp::AlignedData<[u8; {}]> = capnp::AlignedData {{ data: [", vis, name, words.len())),
         Indent(Box::new(Branch(words_lines))),
-        Line("];".to_string())
+        Line("]};".to_string())
     ]))
 }
 
@@ -71,7 +71,7 @@ pub fn generate_pointer_constant(
             Line("::capnp::constant::Reader {".into()),
             Indent(Box::new(Branch(vec![
                 Line("phantom: ::std::marker::PhantomData,".into()),
-                Line("words: &WORDS,".into()),
+                Line("words: &WORDS.data,".into()),
             ]))),
             Line("}".into()),
         ]))),
