@@ -49,13 +49,20 @@ pub mod traits;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(C, align(8))]
-pub(crate) struct Word {
+pub struct Word {
     raw_content: [u8; 8]
+}
+
+///
+/// Constructs a word with the given bytes.
+///
+pub const fn word(b0: u8, b1: u8, b2: u8, b3: u8, b4: u8, b5: u8, b6: u8, b7: u8) -> Word {
+    Word { raw_content: [b0,b1,b2,b3,b4,b5,b6,b7] }
 }
 
 impl Word {
     // vec![0;length], but faster (well, at least faster in debug builds)
-    pub(crate) fn allocate_zeroed_vec(length: usize) -> Vec<Word> {
+    pub fn allocate_zeroed_vec(length: usize) -> Vec<Word> {
         let mut result: Vec<Word> = Vec::with_capacity(length);
         unsafe {
             result.set_len(length);
@@ -63,6 +70,18 @@ impl Word {
             std::ptr::write_bytes(p, 0u8, length * std::mem::size_of::<Word>());
         }
         result
+    }
+
+    pub fn words_to_bytes<'a>(words: &'a [Word]) -> &'a [u8] {
+        unsafe {
+            std::slice::from_raw_parts(words.as_ptr() as *const u8, words.len() * 8)
+        }
+    }
+
+    pub fn words_to_bytes_mut<'a>(words: &'a mut [Word]) -> &'a mut [u8] {
+        unsafe {
+            std::slice::from_raw_parts_mut(words.as_mut_ptr() as *mut u8, words.len() * 8)
+        }
     }
 }
 

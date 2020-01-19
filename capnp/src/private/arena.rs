@@ -89,13 +89,17 @@ impl <S> ReaderArena for ReaderArenaImpl<S> where S: ReaderSegments {
     fn get_segment<'a>(&'a self, id: u32) -> Result<(*const u8, u32)> {
         match self.segments.get_segment(id) {
             Some(seg) => {
-                if seg.as_ptr() as usize % BYTES_PER_WORD != 0 {
-                    Err(Error::failed(format!("Detected unaligned segment. You must either ensure all of your \
-                                               segments are 8-byte aligned, or you must enable the  \"unaligned\" \
-                                               feature in the capnp crate")))
-                } else {
-                    Ok((seg.as_ptr(), (seg.len() / BYTES_PER_WORD) as u32))
+                #[cfg(not(feature = "unaligned"))]
+                {
+                    if seg.as_ptr() as usize % BYTES_PER_WORD != 0 {
+                        return Err(Error::failed(
+                            format!("Detected unaligned segment. You must either ensure all of your \
+                                     segments are 8-byte aligned, or you must enable the  \"unaligned\" \
+                                     feature in the capnp crate")))
+                    }
                 }
+
+                Ok((seg.as_ptr(), (seg.len() / BYTES_PER_WORD) as u32))
             }
             None => Err(Error::failed(format!("Invalid segment id: {}", id))),
         }

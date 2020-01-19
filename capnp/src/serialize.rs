@@ -91,15 +91,13 @@ pub struct OwnedSegments {
 impl std::ops::Deref for OwnedSegments {
     type Target = [u8];
     fn deref(&self) -> &[u8] {
-        unsafe { std::slice::from_raw_parts(self.owned_space.as_ptr() as *const u8,
-                                            self.owned_space.len() * BYTES_PER_WORD) }
+        crate::Word::words_to_bytes(&self.owned_space[..])
     }
 }
 
 impl std::ops::DerefMut for OwnedSegments {
-   fn deref_mut(&mut self) -> &mut [u8] {
-        unsafe { std::slice::from_raw_parts_mut(self.owned_space.as_mut_ptr() as *mut u8,
-                                                self.owned_space.len() * BYTES_PER_WORD) }
+    fn deref_mut(&mut self) -> &mut [u8] {
+        crate::Word::words_to_bytes_mut(&mut self.owned_space[..])
     }
 }
 
