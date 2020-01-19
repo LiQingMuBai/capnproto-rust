@@ -89,6 +89,9 @@ impl ReaderOptions {
 /// An object that manages the buffers underlying a Cap'n Proto message reader.
 pub trait ReaderSegments {
     /// Gets the segment with index `idx`. Returns `None` if `idx` is out of range.
+    ///
+    /// The segment must be 8-byte aligned or the "unaligned" feature must
+    /// be enabled in the capnp crate. (Otherwise reading the segment will return an error.)
     fn get_segment<'a>(&'a self, idx: u32) -> Option<&'a [u8]>;
 
     /// Gets the number of segments.
@@ -258,10 +261,14 @@ pub unsafe trait Allocator {
     ///
     /// The allocated memory MUST be initialized to all zeroes.
     ///
-    /// UNSAFETY ALERT: The callee is responsible for ensuring that the returned memory is valid
-    /// for the lifetime of the object and doesn't overlap with other allocated memory.
+    /// UNSAFETY ALERT: The callee is responsible for ensuring all of the following:
+    ///     1. the returned memory is valid for the lifetime of the Allocator object,
+    ///     2. the memory doesn't overlap with other allocated memory,
+    ///     3. the memory 8-byte aligned (or the "unaligned" feature is enabled for the capnp crate).
     fn allocate_segment(&mut self, minimum_size: u32) -> (*mut u8, u32);
 
+    /// Called before the Allocator is dropped, to allow the first segment to be re-zeroed
+    /// before possibly being reused in another allocator.
     fn pre_drop(&mut self, _segment0_currently_allocated: u32) {}
 }
 

@@ -88,7 +88,15 @@ impl <S> ReaderArenaImpl <S> where S: ReaderSegments {
 impl <S> ReaderArena for ReaderArenaImpl<S> where S: ReaderSegments {
     fn get_segment<'a>(&'a self, id: u32) -> Result<(*const u8, u32)> {
         match self.segments.get_segment(id) {
-            Some(seg) => Ok((seg.as_ptr(), (seg.len() / BYTES_PER_WORD) as u32)),
+            Some(seg) => {
+                if seg.as_ptr() as usize % BYTES_PER_WORD != 0 {
+                    Err(Error::failed(format!("Detected unaligned segment. You must either ensure all of your \
+                                               segments are 8-byte aligned, or you must enable the  \"unaligned\" \
+                                               feature in the capnp crate")))
+                } else {
+                    Ok((seg.as_ptr(), (seg.len() / BYTES_PER_WORD) as u32))
+                }
+            }
             None => Err(Error::failed(format!("Invalid segment id: {}", id))),
         }
     }
@@ -198,7 +206,7 @@ impl <A> ReaderArena for BuilderArenaImpl<A> where A: Allocator {
     fn get_segment(&self, id: u32) -> Result<(*const u8, u32)> {
         let borrow = self.inner.borrow();
         let seg = borrow.segments[id as usize];
-        Ok((seg.0 as *const _, seg.1))
+        Ok((seg.0, seg.1))
     }
 
     fn check_offset(&self, _segment_id: u32, start: *const u8, offset_in_words: i32) -> Result<*const u8> {
