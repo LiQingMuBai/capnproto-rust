@@ -145,7 +145,7 @@ impl SegmentLengthsBuilder {
     /// Constructs an `OwnedSegments`, allocating a single buffer of 8-byte aligned memory to hold
     /// all segments.
     pub fn into_owned_segments(self) -> OwnedSegments {
-        let owned_space = vec![crate::Word {raw_content: [0;8] }; self.total_words];
+        let owned_space = crate::Word::allocate_zeroed_vec(self.total_words);
         OwnedSegments {
             segment_indices: self.segment_indices,
             owned_space,

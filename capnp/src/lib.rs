@@ -53,6 +53,19 @@ pub(crate) struct Word {
     raw_content: [u8; 8]
 }
 
+impl Word {
+    // vec![0;length], but faster (well, at least faster in debug builds)
+    pub(crate) fn allocate_zeroed_vec(length: usize) -> Vec<Word> {
+        let mut result: Vec<Word> = Vec::with_capacity(length);
+        unsafe {
+            result.set_len(length);
+            let p: *mut u8 = result.as_mut_ptr() as *mut u8;
+            std::ptr::write_bytes(p, 0u8, length * std::mem::size_of::<Word>());
+        }
+        result
+    }
+}
+
 #[repr(C, align(8))]
 pub struct AlignedData<T> {
     pub data: T,

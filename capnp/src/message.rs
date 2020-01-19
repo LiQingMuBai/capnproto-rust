@@ -420,7 +420,7 @@ impl HeapAllocator {
 unsafe impl Allocator for HeapAllocator {
     fn allocate_segment(&mut self, minimum_size: u32) -> (*mut u8, u32) {
         let size = ::std::cmp::max(minimum_size, self.next_size);
-        let mut new_words = vec![crate::Word { raw_content: [0;8]}; size as usize];
+        let mut new_words = crate::Word::allocate_zeroed_vec(size as usize);
         let ptr = new_words.as_mut_ptr() as *mut u8;
         self.owned_memory.push(new_words);
 
